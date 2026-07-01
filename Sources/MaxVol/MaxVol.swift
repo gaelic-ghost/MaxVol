@@ -1,6 +1,6 @@
 import Accelerate
 
-private typealias LAPACKInt = __CLPK_integer
+private typealias LAPACKInt = __LAPACK_int
 
 /// Selects a high-volume square row basis from a tall dense `Double` matrix.
 ///
@@ -251,12 +251,12 @@ private func validateLapackInfo(
     rankDeficientInfoIsPivot: Bool
 ) throws {
     if info < 0 {
-        throw MaxVolError.lapackFailure(routine: routine, info: Int32(info))
+        throw MaxVolError.lapackFailure(routine: routine, info: Int(info))
     }
     if info > 0 {
         if rankDeficientInfoIsPivot {
             throw MaxVolError.rankDeficient(pivot: Int(info))
         }
-        throw MaxVolError.lapackFailure(routine: routine, info: Int32(info))
+        throw MaxVolError.lapackFailure(routine: routine, info: Int(info))
     }
 }

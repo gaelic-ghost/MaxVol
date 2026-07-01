@@ -43,7 +43,7 @@ public enum MaxVolError: Error, Equatable, Sendable {
     case rankDeficient(pivot: Int)
 
     /// An Accelerate LAPACK routine reported an unexpected nonzero `info` value.
-    case lapackFailure(routine: String, info: Int32)
+    case lapackFailure(routine: String, info: Int)
 
     /// The algorithm did not converge before the configured iteration limit.
     case maximumIterationsExceeded(limit: Int)
