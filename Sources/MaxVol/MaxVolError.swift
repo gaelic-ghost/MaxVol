@@ -9,6 +9,8 @@ public enum MaxVolError: Error, Equatable, Sendable {
     case invalidSelectedRowIndex(row: Int, availableRows: Int)
     case duplicateSelectedRow(row: Int)
     case coefficientColumnMismatch(selectedRows: Int, coefficientColumns: Int)
+    case invalidTolerance(Double)
+    case invalidIterationLimit(Int)
     case invalidIterationCount(Int)
     case rankDeficient(pivot: Int)
     case lapackFailure(routine: String, info: Int32)
@@ -38,6 +40,10 @@ extension MaxVolError: CustomStringConvertible {
                 "MaxVol selected row index \(row) appears more than once, but selected rows must be unique."
             case let .coefficientColumnMismatch(selectedRows, coefficientColumns):
                 "MaxVol result has \(selectedRows) selected rows but \(coefficientColumns) coefficient columns."
+            case let .invalidTolerance(tolerance):
+                "MaxVol tolerance must be finite and greater than 1.0, but received \(tolerance)."
+            case let .invalidIterationLimit(limit):
+                "MaxVol maximum iteration limit must be nonnegative, but received \(limit)."
             case let .invalidIterationCount(iterations):
                 "MaxVol result cannot report a negative iteration count, but received \(iterations)."
             case let .rankDeficient(pivot):

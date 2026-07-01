@@ -41,6 +41,9 @@
   R implementation.
 - Add Release-mode validation once behavior depends on optimization-sensitive
   Accelerate calls.
+- Move Accelerate calls to the modern `ACCELERATE_NEW_LAPACK` import surface in
+  a focused compatibility pass; a probe showed the define changes imported
+  LAPACK integer type names.
 
 ## Documentation
 
