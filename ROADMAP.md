@@ -2,8 +2,8 @@
 
 ## Current Focus
 
-- Ship `v0.5.0` with square MaxVol for real-valued `Double` matrices backed by
-  modern Accelerate BLAS/LAPACK.
+- Build from `v0.5.0` toward `v1.0.0` with real-valued `Double` algorithms
+  backed by modern Accelerate BLAS/LAPACK.
 - Keep Swift Testing as the package test surface and require reference fixtures
   before broadening the algorithm surface.
 - Treat public API compatibility as pre-1.0 until RectMaxVol, Float support, and
@@ -66,22 +66,22 @@
 
 ## Swift Package Index
 
+- Swift Package Index submission has been started for the public package.
 - Keep SPI readiness checks in the release path.
 - Keep `.spi.yml` aligned with DocC targets when package documentation changes.
 - Verify `swift package dump-package`, `swift build`, `swift test`, and DocC
-  generation before submitting to Swift Package Index.
-- Submit only after the GitHub repository is public and a SemVer tag exists.
+  generation before each tagged release.
+- Monitor SPI package ingestion and rendered documentation as release tags land.
 
 ## GitHub Publication
 
 - Keep the public `gaelic-ghost/MaxVol` repository aligned with SemVer tags.
 - Merge focused pull requests into `main` only after serial `swift build`,
   `swift test`, repo-maintenance validation, and DocC conversion pass.
-- Submit to Swift Package Index after the first public SemVer tag is pushed.
 
 ## Before `1.0.0`
 
-- Implement and test RectMaxVol for `Double`.
+- Complete RectMaxVol for `Double` with reference-parity fixtures.
 - Add `Float` support with the same API shape and reference fixtures.
 - Decide whether complex-valued matrices are in scope for `1.0.0` or explicitly
   post-1.0.
@@ -91,5 +91,4 @@
 - Add performance benchmarks for allocation count and row-swap throughput.
 - Expand DocC with algorithm notes, limitations, and reference-fixture
   provenance.
-- Submit the tagged public package to Swift Package Index and verify rendered
-  documentation.
+- Verify Swift Package Index renders the tagged `v1.0.0` documentation cleanly.

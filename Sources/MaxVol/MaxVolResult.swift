@@ -9,10 +9,10 @@ public struct MaxVolResult<Scalar: Sendable>: Sendable {
     /// `A ~= coefficients * A[selectedRows, :]`.
     public let coefficients: DenseColumnMajorMatrix<Scalar>
 
-    /// The number of row-replacement iterations performed after the initial basis.
+    /// The number of algorithm iterations performed after the initial basis.
     public let iterations: Int
 
-    /// Whether the coefficient matrix satisfied the configured tolerance.
+    /// Whether the coefficient matrix satisfied the configured stopping criterion.
     public let converged: Bool
 
     /// Creates a validated result value.

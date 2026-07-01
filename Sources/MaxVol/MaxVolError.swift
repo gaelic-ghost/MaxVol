@@ -21,6 +21,14 @@ public enum MaxVolError: Error, Equatable, Sendable {
     /// A requested selection count is incompatible with the available rows.
     case invalidSelectionCount(requested: Int, availableRows: Int)
 
+    /// Rectangular row bounds are incompatible with the input matrix.
+    case invalidRowSelectionBounds(
+        minRows: Int,
+        maxRows: Int,
+        requiredRows: Int,
+        availableRows: Int
+    )
+
     /// A selected row index is outside the input matrix bounds.
     case invalidSelectedRowIndex(row: Int, availableRows: Int)
 
@@ -30,7 +38,7 @@ public enum MaxVolError: Error, Equatable, Sendable {
     /// The result coefficient matrix does not match the selected row count.
     case coefficientColumnMismatch(selectedRows: Int, coefficientColumns: Int)
 
-    /// The convergence tolerance is not finite or is less than `1.0`.
+    /// The convergence tolerance is outside the valid range for the requested algorithm.
     case invalidTolerance(Double)
 
     /// The maximum iteration limit is negative.
@@ -44,7 +52,6 @@ public enum MaxVolError: Error, Equatable, Sendable {
 
     /// An Accelerate LAPACK routine reported an unexpected nonzero `info` value.
     case lapackFailure(routine: String, info: Int)
-
 }
 
 extension MaxVolError: CustomStringConvertible {
@@ -64,6 +71,8 @@ extension MaxVolError: CustomStringConvertible {
                 "MaxVol requires a tall or square input matrix with rows >= columns, but received rows: \(rows), columns: \(columns)."
             case let .invalidSelectionCount(requested, availableRows):
                 "MaxVol cannot select \(requested) rows from a matrix with \(availableRows) available rows."
+            case let .invalidRowSelectionBounds(minRows, maxRows, requiredRows, availableRows):
+                "RectMaxVol row bounds are invalid: minRows \(minRows), maxRows \(maxRows), required rows at least \(requiredRows), available rows \(availableRows)."
             case let .invalidSelectedRowIndex(row, availableRows):
                 "MaxVol selected row index \(row) is out of bounds for a matrix with \(availableRows) rows."
             case let .duplicateSelectedRow(row):
@@ -71,7 +80,7 @@ extension MaxVolError: CustomStringConvertible {
             case let .coefficientColumnMismatch(selectedRows, coefficientColumns):
                 "MaxVol result has \(selectedRows) selected rows but \(coefficientColumns) coefficient columns."
             case let .invalidTolerance(tolerance):
-                "MaxVol tolerance must be finite and at least 1.0, but received \(tolerance)."
+                "MaxVol tolerance is outside the valid range for the requested algorithm, but received \(tolerance)."
             case let .invalidIterationLimit(limit):
                 "MaxVol maximum iteration limit must be nonnegative, but received \(limit)."
             case let .invalidIterationCount(iterations):
