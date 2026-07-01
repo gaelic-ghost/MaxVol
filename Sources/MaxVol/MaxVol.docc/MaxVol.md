@@ -33,6 +33,7 @@ let result = try maxVol(matrix)
 
 print(result.selectedRows)
 print(result.iterations)
+print(result.converged)
 ```
 
 The returned coefficients reconstruct the original matrix from the selected

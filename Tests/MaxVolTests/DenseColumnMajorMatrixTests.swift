@@ -149,6 +149,7 @@ struct DenseColumnMajorMatrixTests {
         #expect(result.selectedRows == [0, 1])
         #expect(result.coefficients == coefficients)
         #expect(result.iterations == 3)
+        #expect(result.converged)
     }
 
     @Test func resultRejectsNegativeIterationCount() throws {

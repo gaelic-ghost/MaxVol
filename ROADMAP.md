@@ -2,12 +2,12 @@
 
 ## Current Focus
 
-- Tighten the dense column-major storage and public result/error surfaces before
-  building algorithm behavior on top.
-- Keep the first algorithm path focused on real-valued `Double` matrices backed
-  by Accelerate BLAS/LAPACK.
-- Preserve Swift Testing as the package test surface and expand coverage before
-  optimizing.
+- Ship `v0.5.0` with square MaxVol for real-valued `Double` matrices backed by
+  modern Accelerate BLAS/LAPACK.
+- Keep Swift Testing as the package test surface and require reference fixtures
+  before broadening the algorithm surface.
+- Treat public API compatibility as pre-1.0 until RectMaxVol, Float support, and
+  reference parity are complete.
 
 ## Algorithm Milestones
 
@@ -17,7 +17,8 @@
    - Initialize pivots with Accelerate LAPACK LU factorization.
    - Solve expansion coefficients with Accelerate triangular solve routines.
    - Iterate row swaps with BLAS rank-one updates.
-   - Return selected row indices, coefficient matrix, and iteration count.
+   - Return selected row indices, coefficient matrix, iteration count, and
+     convergence status.
 
 2. Add RectMaxVol for `Double`.
    - Start from square MaxVol selected rows.
@@ -30,6 +31,13 @@
    - Map to the matching single-precision Accelerate entry points.
    - Keep shared validation and result semantics identical.
 
+4. Add reference-parity fixtures for each supported algorithm.
+   - Keep small deterministic fixtures generated from `maxvolpy`, `Maxvol.jl`,
+     or an R implementation.
+   - Record selected rows, coefficients, iteration counts, and convergence
+     status for fixture matrices that require zero, one, and multiple swaps.
+   - Include independent reconstruction checks for every fixture.
+
 ## Test Coverage
 
 - Cover matrix storage, checked access, shape validation, and result invariants.
@@ -37,8 +45,9 @@
 - Verify reconstruction: `A ~= C * A[selectedRows, :]`.
 - Cover identity, square, tall deterministic, rank-deficient, tolerance, and
   maximum-iteration cases.
-- Add small deterministic fixtures generated from a reference Python, Julia, or
-  R implementation.
+- Keep reference fixtures generated from upstream Python, Julia, or R
+  implementations when algorithm behavior changes.
+- Add randomized orthonormal-matrix tests similar to `Maxvol.jl` before `1.0.0`.
 - Add Release-mode validation once behavior depends on optimization-sensitive
   Accelerate calls.
 - Keep validation clean under the modern Accelerate `ACCELERATE_NEW_LAPACK` and
@@ -46,27 +55,41 @@
 
 ## Documentation
 
-- Add a DocC catalog for the package.
+- Maintain the DocC catalog for the package.
 - Document column-major storage and the relationship to Accelerate/LAPACK leading
   dimensions.
 - Document square MaxVol and RectMaxVol usage with small examples.
-- Include algorithm limitations and non-goals before the first tagged release.
+- Keep algorithm limitations and non-goals visible before `1.0.0`.
 - Keep public API docs aligned with tested behavior.
+- Add a DocC article that explains tolerance, convergence status, and
+  iteration-limited partial results before `1.0.0`.
 
 ## Swift Package Index
 
-- Add SPI readiness checks before the first public release.
-- Add `.spi.yml` only when package metadata or DocC configuration needs explicit
-  SPI customization.
+- Keep SPI readiness checks in the release path.
+- Keep `.spi.yml` aligned with DocC targets when package documentation changes.
 - Verify `swift package dump-package`, `swift build`, `swift test`, and DocC
   generation before submitting to Swift Package Index.
 - Submit only after the GitHub repository is public and a SemVer tag exists.
 
 ## GitHub Publication
 
-- Create a public `gaelic-ghost/MaxVol` GitHub repository.
-- Set a concise repository description and high-signal topics.
-- Push the feature branch and open a focused pull request before merging to
-  `main`.
-- Do not create a tagged release until square MaxVol has tested behavior and
-  documentation is present.
+- Keep the public `gaelic-ghost/MaxVol` repository aligned with SemVer tags.
+- Merge focused pull requests into `main` only after serial `swift build`,
+  `swift test`, repo-maintenance validation, and DocC conversion pass.
+- Submit to Swift Package Index after the first public SemVer tag is pushed.
+
+## Before `1.0.0`
+
+- Implement and test RectMaxVol for `Double`.
+- Add `Float` support with the same API shape and reference fixtures.
+- Decide whether complex-valued matrices are in scope for `1.0.0` or explicitly
+  post-1.0.
+- Add broader randomized numerical tests, including orthonormal tall matrices
+  and near-rank-deficient cases.
+- Add Release-mode validation for optimization-sensitive Accelerate behavior.
+- Add performance benchmarks for allocation count and row-swap throughput.
+- Expand DocC with algorithm notes, limitations, and reference-fixture
+  provenance.
+- Submit the tagged public package to Swift Package Index and verify rendered
+  documentation.

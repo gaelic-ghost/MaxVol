@@ -30,7 +30,7 @@ public enum MaxVolError: Error, Equatable, Sendable {
     /// The result coefficient matrix does not match the selected row count.
     case coefficientColumnMismatch(selectedRows: Int, coefficientColumns: Int)
 
-    /// The convergence tolerance is not finite or is less than or equal to `1.0`.
+    /// The convergence tolerance is not finite or is less than `1.0`.
     case invalidTolerance(Double)
 
     /// The maximum iteration limit is negative.
@@ -45,8 +45,6 @@ public enum MaxVolError: Error, Equatable, Sendable {
     /// An Accelerate LAPACK routine reported an unexpected nonzero `info` value.
     case lapackFailure(routine: String, info: Int)
 
-    /// The algorithm did not converge before the configured iteration limit.
-    case maximumIterationsExceeded(limit: Int)
 }
 
 extension MaxVolError: CustomStringConvertible {
@@ -73,7 +71,7 @@ extension MaxVolError: CustomStringConvertible {
             case let .coefficientColumnMismatch(selectedRows, coefficientColumns):
                 "MaxVol result has \(selectedRows) selected rows but \(coefficientColumns) coefficient columns."
             case let .invalidTolerance(tolerance):
-                "MaxVol tolerance must be finite and greater than 1.0, but received \(tolerance)."
+                "MaxVol tolerance must be finite and at least 1.0, but received \(tolerance)."
             case let .invalidIterationLimit(limit):
                 "MaxVol maximum iteration limit must be nonnegative, but received \(limit)."
             case let .invalidIterationCount(iterations):
@@ -82,8 +80,6 @@ extension MaxVolError: CustomStringConvertible {
                 "MaxVol could not continue because the input matrix appears rank-deficient at pivot \(pivot)."
             case let .lapackFailure(routine, info):
                 "Accelerate LAPACK routine \(routine) reported info \(info)."
-            case let .maximumIterationsExceeded(limit):
-                "MaxVol stopped after reaching the maximum iteration limit of \(limit)."
         }
     }
 }

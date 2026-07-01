@@ -22,7 +22,8 @@ following the same shape once the API is settled.
    - Initialize pivots with `dgetrf`.
    - Solve for expansion coefficients with triangular solves.
    - Iterate row swaps using the standard rank-one update with `dger`.
-   - Return selected row indices, coefficient matrix, and iteration count.
+   - Return selected row indices, coefficient matrix, iteration count, and
+     whether the coefficient tolerance was reached.
 
 3. Add RectMaxVol on top of square MaxVol.
    - Start from square MaxVol pivots.
@@ -34,7 +35,8 @@ following the same shape once the API is settled.
    - Verify reconstruction `A ~= C * A[pivots, :]`.
    - Check pivot count, uniqueness, and bounds.
    - Cover identity, tall random, rank-deficient, tolerance, and max-iteration cases.
-   - Compare small deterministic fixtures against a reference Python or Julia result.
+   - Compare small deterministic fixtures against reference Python, Julia, or R
+     results.
 
 5. Add performance-focused refinements only after the behavior is stable.
    - Avoid repeated temporary allocations in the swap loop.

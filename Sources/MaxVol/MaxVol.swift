@@ -15,7 +15,6 @@ public func maxVol(
     let options = try options.validated()
     var selectedRows = try initialPivotRows(for: input)
     var coefficients = try expansionCoefficients(for: input, selectedRows: selectedRows)
-    let maxIterations = options.maxIterations ?? max(1, input.rows * input.columns)
     var iterations = 0
 
     while true {
@@ -24,11 +23,17 @@ public func maxVol(
             return try MaxVolResult(
                 selectedRows: selectedRows,
                 coefficients: coefficients,
-                iterations: iterations
+                iterations: iterations,
+                converged: true
             )
         }
-        guard iterations < maxIterations else {
-            throw MaxVolError.maximumIterationsExceeded(limit: maxIterations)
+        guard iterations < options.maxIterations else {
+            return try MaxVolResult(
+                selectedRows: selectedRows,
+                coefficients: coefficients,
+                iterations: iterations,
+                converged: false
+            )
         }
 
         selectedRows[pivot.column] = pivot.row

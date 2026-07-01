@@ -12,6 +12,9 @@ public struct MaxVolResult<Scalar: Sendable>: Sendable {
     /// The number of row-replacement iterations performed after the initial basis.
     public let iterations: Int
 
+    /// Whether the coefficient matrix satisfied the configured tolerance.
+    public let converged: Bool
+
     /// Creates a validated result value.
     ///
     /// The selected row count must match the coefficient column count, selected
@@ -20,7 +23,8 @@ public struct MaxVolResult<Scalar: Sendable>: Sendable {
     public init(
         selectedRows: [Int],
         coefficients: DenseColumnMajorMatrix<Scalar>,
-        iterations: Int
+        iterations: Int,
+        converged: Bool = true
     ) throws {
         try Self.validate(
             selectedRows: selectedRows,
@@ -31,6 +35,7 @@ public struct MaxVolResult<Scalar: Sendable>: Sendable {
         self.selectedRows = selectedRows
         self.coefficients = coefficients
         self.iterations = iterations
+        self.converged = converged
     }
 
     private static func validate(
