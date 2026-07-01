@@ -48,18 +48,25 @@ public struct DenseColumnMajorMatrix<Scalar: Sendable>: Sendable {
         }
     }
 
-    public subscript(row row: Int, column column: Int) -> Scalar {
-        get { values[column * leadingDimension + row] }
-        set { values[column * leadingDimension + row] = newValue }
+    public func value(row: Int, column: Int) throws -> Scalar {
+        try validateIndex(row: row, column: column)
+        return self[row: row, column: column]
     }
 
-    public func row(_ row: Int) -> [Scalar] {
-        (0..<columns).map { column in
+    public mutating func setValue(_ value: Scalar, row: Int, column: Int) throws {
+        try validateIndex(row: row, column: column)
+        self[row: row, column: column] = value
+    }
+
+    public func row(_ row: Int) throws -> [Scalar] {
+        try validateRow(row)
+        return (0..<columns).map { column in
             self[row: row, column: column]
         }
     }
 
-    public func column(_ column: Int) -> ArraySlice<Scalar> {
+    public func column(_ column: Int) throws -> ArraySlice<Scalar> {
+        try validateColumn(column)
         let start = column * leadingDimension
         return values[start..<start + rows]
     }
@@ -70,6 +77,34 @@ public struct DenseColumnMajorMatrix<Scalar: Sendable>: Sendable {
         }
 
         return self
+    }
+
+    subscript(row row: Int, column column: Int) -> Scalar {
+        get { values[column * leadingDimension + row] }
+        set { values[column * leadingDimension + row] = newValue }
+    }
+
+    private func validateIndex(row: Int, column: Int) throws {
+        guard (0..<rows).contains(row), (0..<columns).contains(column) else {
+            throw MaxVolError.matrixIndexOutOfBounds(
+                row: row,
+                column: column,
+                rows: rows,
+                columns: columns
+            )
+        }
+    }
+
+    private func validateRow(_ row: Int) throws {
+        guard (0..<rows).contains(row) else {
+            throw MaxVolError.rowIndexOutOfBounds(row: row, rows: rows)
+        }
+    }
+
+    private func validateColumn(_ column: Int) throws {
+        guard (0..<columns).contains(column) else {
+            throw MaxVolError.columnIndexOutOfBounds(column: column, columns: columns)
+        }
     }
 }
 
