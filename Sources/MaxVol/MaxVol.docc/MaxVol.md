@@ -1,0 +1,58 @@
+# ``MaxVol``
+
+Select high-volume row submatrices from dense matrices using Swift and
+Accelerate.
+
+## Overview
+
+MaxVol provides Swift-native APIs for selecting representative rows from tall
+dense matrices. The first implementation path supports real-valued `Double`
+matrices stored in column-major order so the package can call Accelerate BLAS
+and LAPACK routines directly.
+
+Use ``DenseColumnMajorMatrix`` to make matrix layout explicit at API
+boundaries:
+
+```swift
+let matrix = try DenseColumnMajorMatrix(
+    rows: 4,
+    columns: 2,
+    rowMajorValues: [
+        1.0, 0.0,
+        0.0, 1.0,
+        0.5, 0.25,
+        -0.25, 0.75,
+    ]
+)
+```
+
+Call ``maxVol(_:options:)`` to select a square basis from a tall matrix:
+
+```swift
+let result = try maxVol(matrix)
+
+print(result.selectedRows)
+print(result.iterations)
+print(result.converged)
+```
+
+The returned coefficients reconstruct the original matrix from the selected
+rows:
+
+```swift
+// A ~= C * A[selectedRows, :]
+let coefficients = result.coefficients
+```
+
+## Topics
+
+### Matrix Storage
+
+- ``DenseColumnMajorMatrix``
+
+### MaxVol
+
+- ``maxVol(_:options:)``
+- ``MaxVolOptions``
+- ``MaxVolResult``
+- ``MaxVolError``
