@@ -6,7 +6,7 @@ Accelerate.
 ## Overview
 
 MaxVol provides Swift-native APIs for selecting representative rows from tall
-dense matrices. The first implementation path supports real-valued `Double`
+dense matrices. The implementation supports real-valued `Double` and `Float`
 matrices stored in column-major order so the package can call Accelerate BLAS
 and LAPACK routines directly.
 
@@ -26,7 +26,12 @@ let matrix = try DenseColumnMajorMatrix(
 )
 ```
 
-Call ``maxVol(_:options:)`` to select a square basis from a tall matrix:
+Use `DenseColumnMajorMatrix<Float>` for the single-precision path; the public
+algorithm calls keep the same shape.
+
+Call ``maxVol(_:options:)->MaxVolResult<Double>`` or
+``maxVol(_:options:)->MaxVolResult<Float>`` to select a square basis from a
+tall matrix:
 
 ```swift
 let result = try maxVol(matrix)
@@ -44,8 +49,9 @@ rows:
 let coefficients = result.coefficients
 ```
 
-Call ``rectMaxVol(_:options:)`` when the basis may contain more rows than the
-matrix column count:
+Call ``rectMaxVol(_:options:)->MaxVolResult<Double>`` or
+``rectMaxVol(_:options:)->MaxVolResult<Float>`` when the basis may contain more
+rows than the matrix column count:
 
 ```swift
 let rectangular = try rectMaxVol(matrix, options: RectMaxVolOptions(minRows: 3))
@@ -59,8 +65,10 @@ let rectangular = try rectMaxVol(matrix, options: RectMaxVolOptions(minRows: 3))
 
 ### MaxVol
 
-- ``maxVol(_:options:)``
-- ``rectMaxVol(_:options:)``
+- ``maxVol(_:options:)->MaxVolResult<Double>``
+- ``maxVol(_:options:)->MaxVolResult<Float>``
+- ``rectMaxVol(_:options:)->MaxVolResult<Double>``
+- ``rectMaxVol(_:options:)->MaxVolResult<Float>``
 - ``MaxVolOptions``
 - ``RectMaxVolOptions``
 - ``MaxVolResult``

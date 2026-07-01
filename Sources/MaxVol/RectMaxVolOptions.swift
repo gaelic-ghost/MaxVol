@@ -32,7 +32,11 @@ public struct RectMaxVolOptions: Equatable, Hashable, Sendable {
         self.startMaxVolIterations = startMaxVolIterations
     }
 
-    func resolved(for matrix: DenseColumnMajorMatrix<Double>) throws -> ResolvedRectMaxVolOptions {
+    func resolved<Scalar>(for matrix: DenseColumnMajorMatrix<Scalar>) throws -> ResolvedRectMaxVolOptions {
+        try resolved(rows: matrix.rows, columns: matrix.columns)
+    }
+
+    func resolved(rows: Int, columns: Int) throws -> ResolvedRectMaxVolOptions {
         guard tolerance.isFinite, tolerance > 0 else {
             throw MaxVolError.invalidTolerance(tolerance)
         }
@@ -40,21 +44,21 @@ public struct RectMaxVolOptions: Equatable, Hashable, Sendable {
             throw MaxVolError.invalidIterationLimit(startMaxVolIterations)
         }
 
-        let requiredRows = matrix.columns
+        let requiredRows = columns
         let resolvedMinRows = minRows ?? requiredRows
-        let resolvedMaxRows = maxRows ?? matrix.rows
+        let resolvedMaxRows = maxRows ?? rows
 
         guard
             resolvedMinRows >= requiredRows,
             resolvedMaxRows >= requiredRows,
             resolvedMinRows <= resolvedMaxRows,
-            resolvedMaxRows <= matrix.rows
+            resolvedMaxRows <= rows
         else {
             throw MaxVolError.invalidRowSelectionBounds(
                 minRows: resolvedMinRows,
                 maxRows: resolvedMaxRows,
                 requiredRows: requiredRows,
-                availableRows: matrix.rows
+                availableRows: rows
             )
         }
 

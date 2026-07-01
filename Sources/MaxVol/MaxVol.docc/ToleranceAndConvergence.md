@@ -22,9 +22,10 @@ let coefficients = result.coefficients
 
 ## Square MaxVol
 
-``maxVol(_:options:)`` selects exactly one row per matrix column. The square
-algorithm starts from an LU-pivoted basis, computes expansion coefficients, and
-swaps rows while any coefficient magnitude is larger than
+``maxVol(_:options:)->MaxVolResult<Double>`` and
+``maxVol(_:options:)->MaxVolResult<Float>`` select exactly one row per matrix
+column. The square algorithm starts from an LU-pivoted basis, computes expansion
+coefficients, and swaps rows while any coefficient magnitude is larger than
 ``MaxVolOptions/tolerance``.
 
 The square tolerance must be at least `1.0`. Values closer to `1.0` usually do
@@ -37,10 +38,11 @@ validated and reconstructs through its current selected rows, but
 
 ## RectMaxVol
 
-``rectMaxVol(_:options:)`` starts from square MaxVol, then appends extra rows.
-The rectangular stopping test uses coefficient row norms instead of individual
-coefficient magnitudes: unselected rows are appended while their coefficient row
-norm exceeds ``RectMaxVolOptions/tolerance``.
+``rectMaxVol(_:options:)->MaxVolResult<Double>`` and
+``rectMaxVol(_:options:)->MaxVolResult<Float>`` start from square MaxVol, then
+append extra rows. The rectangular stopping test uses coefficient row norms
+instead of individual coefficient magnitudes: unselected rows are appended while
+their coefficient row norm exceeds ``RectMaxVolOptions/tolerance``.
 
 ``RectMaxVolOptions/minRows`` can force extra rows even when the tolerance is
 already satisfied. ``RectMaxVolOptions/maxRows`` can stop the append loop before
@@ -57,12 +59,18 @@ stronger square basis matters. For rectangular selection, set
 basis size, and set ``RectMaxVolOptions/maxRows`` when runtime or storage must
 be bounded.
 
+The same option types apply to both `Double` and `Float` overloads. Tolerances
+are expressed as `Double` values so callers can keep one configuration surface
+while the numerical work uses the matrix scalar type.
+
 ## Topics
 
 ### Related APIs
 
-- ``maxVol(_:options:)``
-- ``rectMaxVol(_:options:)``
+- ``maxVol(_:options:)->MaxVolResult<Double>``
+- ``maxVol(_:options:)->MaxVolResult<Float>``
+- ``rectMaxVol(_:options:)->MaxVolResult<Double>``
+- ``rectMaxVol(_:options:)->MaxVolResult<Float>``
 - ``MaxVolOptions``
 - ``RectMaxVolOptions``
 - ``MaxVolResult``
