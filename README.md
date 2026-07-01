@@ -45,6 +45,39 @@ deprecated compatibility shims.
      points.
    - Consider complex support only after real-valued APIs are stable.
 
+## Benchmarking
+
+`MaxVolBenchmark` runs deterministic fixtures through the Swift implementation
+and prints one JSON object per result:
+
+```bash
+swift run -c release MaxVolBenchmark --iterations 20
+```
+
+The Python comparison harness reads the same checked-in fixture values and runs
+the official `maxvolpy` implementation from the PyPI source distribution:
+
+```bash
+uv run --python 3.11 scripts/compare_maxvolpy.py --iterations 20
+```
+
+To compare correctness-oriented fields, write both outputs as JSONL and run the
+parity checker:
+
+```bash
+swift run -c release MaxVolBenchmark --iterations 20 > /tmp/maxvol-swift.jsonl
+uv run --python 3.11 scripts/compare_maxvolpy.py --iterations 20 > /tmp/maxvol-python.jsonl
+python3 scripts/check_benchmark_parity.py /tmp/maxvol-swift.jsonl /tmp/maxvol-python.jsonl
+```
+
+For allocation profiling, build the executable once and record the workload with
+Instruments from the command line:
+
+```bash
+swift build -c release --product MaxVolBenchmark
+xcrun xctrace record --template 'Allocations' --output /tmp/MaxVolBenchmark.trace --launch -- .build/release/MaxVolBenchmark --iterations 100
+```
+
 ## Non-Goals For The First Pass
 
 - Exact exhaustive maximum-volume search.

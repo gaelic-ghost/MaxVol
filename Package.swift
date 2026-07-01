@@ -14,6 +14,10 @@ let package = Package(
             name: "MaxVol",
             targets: ["MaxVol"]
         ),
+        .executable(
+            name: "MaxVolBenchmark",
+            targets: ["MaxVolBenchmark"]
+        ),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -23,6 +27,13 @@ let package = Package(
             cSettings: [
                 .define("ACCELERATE_NEW_LAPACK"),
                 .define("ACCELERATE_LAPACK_ILP64"),
+            ]
+        ),
+        .executableTarget(
+            name: "MaxVolBenchmark",
+            dependencies: ["MaxVol"],
+            resources: [
+                .copy("Resources/fixtures.json"),
             ]
         ),
         .testTarget(

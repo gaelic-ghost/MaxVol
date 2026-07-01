@@ -2,7 +2,7 @@
 
 ## Current Focus
 
-- Build from `v0.7.0` toward `v1.0.0` with real-valued `Double` and `Float`
+- Build from `v0.8.0` toward `v1.0.0` with real-valued `Double` and `Float`
   algorithms backed by modern Accelerate BLAS/LAPACK.
 - Keep Swift Testing as the package test surface and require reference fixtures
   before broadening the algorithm surface.
@@ -39,6 +39,8 @@
    - Reduce temporary allocations in square row swaps and rectangular appends.
    - Reuse workspace buffers where it improves measured throughput.
    - Add benchmark coverage for representative row counts and ranks.
+   - Compare Swift Release-mode results with official `maxvolpy` runs on shared
+     deterministic fixtures before changing allocation behavior.
 
 ## Test Coverage
 
@@ -51,6 +53,8 @@
   implementations when algorithm behavior changes.
 - Keep randomized orthonormal-matrix tests similar to `Maxvol.jl` across
   supported scalar types.
+- Keep benchmark fixture parity checks available for every supported scalar and
+  algorithm family.
 - Keep Release-mode validation in the release path for optimization-sensitive
   Accelerate calls.
 - Keep validation clean under the modern Accelerate `ACCELERATE_NEW_LAPACK` and
@@ -66,6 +70,8 @@
 - Keep public API docs aligned with tested behavior.
 - Expand DocC with algorithm notes, limitations, and reference-fixture
   provenance before `1.0.0`.
+- Keep benchmark and profiling commands documented so performance work remains
+  reproducible.
 
 ## Swift Package Index
 
@@ -95,3 +101,17 @@
 - Expand DocC with reference-fixture provenance and a short comparison with
   Python, Julia, and R implementations.
 - Verify Swift Package Index renders the tagged `v1.0.0` documentation cleanly.
+
+## Planned `v0.9.0`
+
+- Use `MaxVolBenchmark` and the `maxvolpy` comparison harness as the baseline
+  evidence source before changing performance-sensitive code.
+- Measure Release-mode square row-swap throughput and RectMaxVol append
+  throughput across the checked-in deterministic fixture set.
+- Capture allocation traces for the largest fixtures and identify temporary
+  buffers created inside coefficient construction, square row replacement, and
+  rectangular appends.
+- Decide whether reusable workspaces should remain an internal optimization or
+  become a public advanced API.
+- Implement only measured allocation reductions, then re-run parity, timing, and
+  allocation checks before tagging `v0.9.0`.
