@@ -66,20 +66,18 @@
 
 ## Swift Package Index
 
-- Defer Swift Package Index submission until `v1.0.0`.
+- Swift Package Index submission has been started for the public package.
 - Keep SPI readiness checks in the release path.
 - Keep `.spi.yml` aligned with DocC targets when package documentation changes.
 - Verify `swift package dump-package`, `swift build`, `swift test`, and DocC
-  generation before the eventual Swift Package Index submission.
-- Submit only after the GitHub repository is public and the `v1.0.0` SemVer tag
-  exists.
+  generation before each tagged release.
+- Monitor SPI package ingestion and rendered documentation as release tags land.
 
 ## GitHub Publication
 
 - Keep the public `gaelic-ghost/MaxVol` repository aligned with SemVer tags.
 - Merge focused pull requests into `main` only after serial `swift build`,
   `swift test`, repo-maintenance validation, and DocC conversion pass.
-- Do not submit to Swift Package Index before `v1.0.0`.
 
 ## Before `1.0.0`
 
@@ -93,5 +91,4 @@
 - Add performance benchmarks for allocation count and row-swap throughput.
 - Expand DocC with algorithm notes, limitations, and reference-fixture
   provenance.
-- Submit the tagged `v1.0.0` public package to Swift Package Index and verify
-  rendered documentation.
+- Verify Swift Package Index renders the tagged `v1.0.0` documentation cleanly.
