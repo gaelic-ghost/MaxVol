@@ -1,8 +1,22 @@
+/// The row selection and expansion coefficients produced by MaxVol.
 public struct MaxVolResult<Scalar: Sendable>: Sendable {
+    /// The selected row indices in the input matrix.
     public let selectedRows: [Int]
+
+    /// Coefficients that reconstruct the input from the selected rows.
+    ///
+    /// For an input matrix `A`, the result is shaped so
+    /// `A ~= coefficients * A[selectedRows, :]`.
     public let coefficients: DenseColumnMajorMatrix<Scalar>
+
+    /// The number of row-replacement iterations performed after the initial basis.
     public let iterations: Int
 
+    /// Creates a validated result value.
+    ///
+    /// The selected row count must match the coefficient column count, selected
+    /// rows must be unique and in bounds, and the iteration count must be
+    /// nonnegative.
     public init(
         selectedRows: [Int],
         coefficients: DenseColumnMajorMatrix<Scalar>,

@@ -2,6 +2,11 @@ import Accelerate
 
 private typealias LAPACKInt = __CLPK_integer
 
+/// Selects a high-volume square row basis from a tall dense `Double` matrix.
+///
+/// The returned coefficients are shaped so the input matrix `A` can be
+/// approximated by `C * A[selectedRows, :]`, where `C` is
+/// ``MaxVolResult/coefficients``.
 public func maxVol(
     _ matrix: DenseColumnMajorMatrix<Double>,
     options: MaxVolOptions = MaxVolOptions()

@@ -1,19 +1,51 @@
+/// Errors thrown by MaxVol matrix validation and Accelerate-backed computation.
 public enum MaxVolError: Error, Equatable, Sendable {
+    /// Matrix dimensions must be positive and fit in addressable storage.
     case invalidDimensions(rows: Int, columns: Int)
+
+    /// The value buffer count does not match the requested matrix shape.
     case malformedMatrix(rows: Int, columns: Int, expectedCount: Int, actualCount: Int)
+
+    /// A row and column pair is outside the matrix bounds.
     case matrixIndexOutOfBounds(row: Int, column: Int, rows: Int, columns: Int)
+
+    /// A row index is outside the matrix bounds.
     case rowIndexOutOfBounds(row: Int, rows: Int)
+
+    /// A column index is outside the matrix bounds.
     case columnIndexOutOfBounds(column: Int, columns: Int)
+
+    /// MaxVol currently requires a tall or square input matrix.
     case nonTallMatrix(rows: Int, columns: Int)
+
+    /// A requested selection count is incompatible with the available rows.
     case invalidSelectionCount(requested: Int, availableRows: Int)
+
+    /// A selected row index is outside the input matrix bounds.
     case invalidSelectedRowIndex(row: Int, availableRows: Int)
+
+    /// A result contains the same selected row more than once.
     case duplicateSelectedRow(row: Int)
+
+    /// The result coefficient matrix does not match the selected row count.
     case coefficientColumnMismatch(selectedRows: Int, coefficientColumns: Int)
+
+    /// The convergence tolerance is not finite or is less than or equal to `1.0`.
     case invalidTolerance(Double)
+
+    /// The maximum iteration limit is negative.
     case invalidIterationLimit(Int)
+
+    /// A result reports a negative iteration count.
     case invalidIterationCount(Int)
+
+    /// The selected basis is rank-deficient.
     case rankDeficient(pivot: Int)
+
+    /// An Accelerate LAPACK routine reported an unexpected nonzero `info` value.
     case lapackFailure(routine: String, info: Int32)
+
+    /// The algorithm did not converge before the configured iteration limit.
     case maximumIterationsExceeded(limit: Int)
 }
 
