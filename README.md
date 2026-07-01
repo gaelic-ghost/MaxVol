@@ -7,8 +7,8 @@ by Accelerate.
 
 This package should provide small, explicit Swift APIs for selecting high-volume
 row submatrices from tall dense matrices. The first implementation target is a
-real-valued `Double` path using Accelerate BLAS/LAPACK, with `Float` support
-following the same shape once the API is settled.
+real-valued `Double` and `Float` path using Accelerate BLAS/LAPACK without
+deprecated compatibility shims.
 
 ## Implementation Plan
 
@@ -17,11 +17,11 @@ following the same shape once the API is settled.
    - Keep dimensions explicit and validate shape before calling Accelerate.
    - Return descriptive errors for non-tall, rank-deficient, or malformed input.
 
-2. Implement square MaxVol for `Double`.
+2. Implement square MaxVol for `Double` and `Float`.
    - Accept an `N x r` matrix where `N >= r`.
-   - Initialize pivots with `dgetrf`.
+   - Initialize pivots with `dgetrf` / `sgetrf`.
    - Solve for expansion coefficients with triangular solves.
-   - Iterate row swaps using the standard rank-one update with `dger`.
+   - Iterate row swaps using the standard rank-one update with `dger` / `sger`.
    - Return selected row indices, coefficient matrix, iteration count, and
      whether the coefficient tolerance was reached.
 
@@ -41,7 +41,8 @@ following the same shape once the API is settled.
 5. Add performance-focused refinements only after the behavior is stable.
    - Avoid repeated temporary allocations in the swap loop.
    - Reuse workspace buffers.
-   - Add `Float` variants mapped to `sgetrf`, `strsm`, and `sger`.
+   - Keep `Double` and `Float` paths mapped to the matching Accelerate entry
+     points.
    - Consider complex support only after real-valued APIs are stable.
 
 ## Non-Goals For The First Pass

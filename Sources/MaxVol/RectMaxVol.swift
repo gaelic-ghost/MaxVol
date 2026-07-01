@@ -1,19 +1,34 @@
-import Accelerate
-
-private typealias LAPACKInt = __LAPACK_int
-
 /// Selects a high-volume rectangular row basis from a tall dense `Double` matrix.
 ///
-/// RectMaxVol starts with ``maxVol(_:options:)`` and appends rows until every
-/// remaining unselected coefficient row satisfies ``RectMaxVolOptions/tolerance``
-/// or the configured row bounds stop the append loop.
+/// RectMaxVol starts with ``maxVol(_:options:)->MaxVolResult<Double>`` and appends
+/// rows until every remaining unselected coefficient row satisfies
+/// ``RectMaxVolOptions/tolerance`` or the configured row bounds stop the append loop.
 public func rectMaxVol(
     _ matrix: DenseColumnMajorMatrix<Double>,
     options: RectMaxVolOptions = RectMaxVolOptions()
 ) throws -> MaxVolResult<Double> {
+    try rectMaxVolImpl(matrix, options: options)
+}
+
+/// Selects a high-volume rectangular row basis from a tall dense `Float` matrix.
+///
+/// RectMaxVol starts with ``maxVol(_:options:)->MaxVolResult<Float>`` and appends
+/// rows until every remaining unselected coefficient row satisfies
+/// ``RectMaxVolOptions/tolerance`` or the configured row bounds stop the append loop.
+public func rectMaxVol(
+    _ matrix: DenseColumnMajorMatrix<Float>,
+    options: RectMaxVolOptions = RectMaxVolOptions()
+) throws -> MaxVolResult<Float> {
+    try rectMaxVolImpl(matrix, options: options)
+}
+
+func rectMaxVolImpl<Scalar: MaxVolScalar>(
+    _ matrix: DenseColumnMajorMatrix<Scalar>,
+    options: RectMaxVolOptions = RectMaxVolOptions()
+) throws -> MaxVolResult<Scalar> {
     let input = try matrix.validatedTallMatrix()
-    let options = try options.resolved(for: input)
-    let initial = try maxVol(
+    let options = try options.resolved(rows: input.rows, columns: input.columns)
+    let initial = try maxVolImpl(
         input,
         options: MaxVolOptions(maxIterations: options.startMaxVolIterations)
     )
@@ -69,8 +84,8 @@ private struct RowNormCandidate {
     let value: Double
 }
 
-private func maximumUnselectedRowNormSquared(
-    in coefficients: DenseColumnMajorMatrix<Double>,
+private func maximumUnselectedRowNormSquared<Scalar: MaxVolScalar>(
+    in coefficients: DenseColumnMajorMatrix<Scalar>,
     selectedRows: [Int]
 ) -> RowNormCandidate {
     let selected = Set(selectedRows)
@@ -79,7 +94,7 @@ private func maximumUnselectedRowNormSquared(
     for row in 0..<coefficients.rows where !selected.contains(row) {
         let value = (0..<coefficients.columns).reduce(0) { total, column in
             let coefficient = coefficients[row: row, column: column]
-            return total + coefficient * coefficient
+            return total + coefficient.magnitudeAsDouble * coefficient.magnitudeAsDouble
         }
 
         if candidate.row == nil || value > candidate.value {
@@ -90,13 +105,13 @@ private func maximumUnselectedRowNormSquared(
     return candidate
 }
 
-private func appendRectangularBasisRow(
+private func appendRectangularBasisRow<Scalar: MaxVolScalar>(
     _ candidateRow: Int,
-    to coefficients: DenseColumnMajorMatrix<Double>
-) throws -> DenseColumnMajorMatrix<Double> {
+    to coefficients: DenseColumnMajorMatrix<Scalar>
+) throws -> DenseColumnMajorMatrix<Scalar> {
     let candidateCoefficients = try coefficients.row(candidateRow)
     let projection = (0..<coefficients.rows).map { row in
-        (0..<coefficients.columns).reduce(0) { total, column in
+        (0..<coefficients.columns).reduce(Scalar.zero) { total, column in
             total + coefficients[row: row, column: column] * candidateCoefficients[column]
         }
     }
@@ -111,17 +126,16 @@ private func appendRectangularBasisRow(
     projection.withUnsafeBufferPointer { projectionBuffer -> Void in
         candidateCoefficients.withUnsafeBufferPointer { coefficientBuffer -> Void in
             updatedValues.withUnsafeMutableBufferPointer { updatedBuffer -> Void in
-                cblas_dger(
-                    CblasColMajor,
-                    rowCount,
-                    columnCount,
-                    -scale,
-                    projectionBuffer.baseAddress,
-                    increment,
-                    coefficientBuffer.baseAddress,
-                    increment,
-                    updatedBuffer.baseAddress,
-                    leadingDimension
+                Scalar.rankOneUpdate(
+                    rowCount: rowCount,
+                    columnCount: columnCount,
+                    alpha: -scale,
+                    x: projectionBuffer.baseAddress,
+                    incrementX: increment,
+                    y: coefficientBuffer.baseAddress,
+                    incrementY: increment,
+                    values: updatedBuffer.baseAddress,
+                    leadingDimension: leadingDimension
                 )
             }
         }
@@ -135,10 +149,10 @@ private func appendRectangularBasisRow(
     )
 }
 
-private func coefficientsWithIdentityRows(
-    _ coefficients: DenseColumnMajorMatrix<Double>,
+private func coefficientsWithIdentityRows<Scalar: MaxVolScalar>(
+    _ coefficients: DenseColumnMajorMatrix<Scalar>,
     selectedRows: [Int]
-) throws -> DenseColumnMajorMatrix<Double> {
+) throws -> DenseColumnMajorMatrix<Scalar> {
     var output = coefficients
 
     for (identityColumn, selectedRow) in selectedRows.enumerated() {
@@ -152,12 +166,4 @@ private func coefficientsWithIdentityRows(
     }
 
     return output
-}
-
-private func lapackInt(_ value: Int) throws -> LAPACKInt {
-    guard value <= Int(LAPACKInt.max) else {
-        throw MaxVolError.invalidDimensions(rows: value, columns: value)
-    }
-
-    return LAPACKInt(value)
 }

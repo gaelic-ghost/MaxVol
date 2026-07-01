@@ -2,17 +2,19 @@
 
 ## Current Focus
 
-- Build from `v0.5.0` toward `v1.0.0` with real-valued `Double` algorithms
-  backed by modern Accelerate BLAS/LAPACK.
+- Build from `v0.7.0` toward `v1.0.0` with real-valued `Double` and `Float`
+  algorithms backed by modern Accelerate BLAS/LAPACK.
 - Keep Swift Testing as the package test surface and require reference fixtures
   before broadening the algorithm surface.
-- Treat public API compatibility as pre-1.0 until RectMaxVol, Float support, and
-  reference parity are complete.
+- Treat public API compatibility as pre-1.0 until reference parity,
+  performance behavior, and documentation are complete enough to support a
+  stable contract.
 
 ## Algorithm Milestones
 
-1. Implement square MaxVol for `Double`.
-   - Accept a tall or square `DenseColumnMajorMatrix<Double>` where
+1. Implement square MaxVol for `Double` and `Float`.
+   - Accept a tall or square `DenseColumnMajorMatrix<Double>` or
+     `DenseColumnMajorMatrix<Float>` where
      `rows >= columns`.
    - Initialize pivots with Accelerate LAPACK LU factorization.
    - Solve expansion coefficients with Accelerate triangular solve routines.
@@ -20,23 +22,23 @@
    - Return selected row indices, coefficient matrix, iteration count, and
      convergence status.
 
-2. Add RectMaxVol for `Double`.
+2. Add RectMaxVol for `Double` and `Float`.
    - Start from square MaxVol selected rows.
    - Append rows while coefficient row norms exceed tolerance.
    - Support explicit `minRows` and `maxRows` bounds.
    - Reuse coefficient-update primitives from square MaxVol where practical.
 
-3. Add `Float` support after the `Double` API is stable.
-   - Mirror the `Double` API shape.
-   - Map to the matching single-precision Accelerate entry points.
-   - Keep shared validation and result semantics identical.
-
-4. Add reference-parity fixtures for each supported algorithm.
+3. Add reference-parity fixtures for each supported algorithm.
    - Keep small deterministic fixtures generated from `maxvolpy`, `Maxvol.jl`,
      or an R implementation.
    - Record selected rows, coefficients, iteration counts, and convergence
      status for fixture matrices that require zero, one, and multiple swaps.
    - Include independent reconstruction checks for every fixture.
+
+4. Add performance-focused refinements.
+   - Reduce temporary allocations in square row swaps and rectangular appends.
+   - Reuse workspace buffers where it improves measured throughput.
+   - Add benchmark coverage for representative row counts and ranks.
 
 ## Test Coverage
 
@@ -47,8 +49,9 @@
   maximum-iteration cases.
 - Keep reference fixtures generated from upstream Python, Julia, or R
   implementations when algorithm behavior changes.
-- Add randomized orthonormal-matrix tests similar to `Maxvol.jl` before `1.0.0`.
-- Add Release-mode validation once behavior depends on optimization-sensitive
+- Keep randomized orthonormal-matrix tests similar to `Maxvol.jl` across
+  supported scalar types.
+- Keep Release-mode validation in the release path for optimization-sensitive
   Accelerate calls.
 - Keep validation clean under the modern Accelerate `ACCELERATE_NEW_LAPACK` and
   `ACCELERATE_LAPACK_ILP64` import surface.
@@ -61,8 +64,8 @@
 - Document square MaxVol and RectMaxVol usage with small examples.
 - Keep algorithm limitations and non-goals visible before `1.0.0`.
 - Keep public API docs aligned with tested behavior.
-- Add a DocC article that explains tolerance, convergence status, and
-  iteration-limited partial results before `1.0.0`.
+- Expand DocC with algorithm notes, limitations, and reference-fixture
+  provenance before `1.0.0`.
 
 ## Swift Package Index
 
@@ -81,14 +84,14 @@
 
 ## Before `1.0.0`
 
-- Complete RectMaxVol for `Double` with reference-parity fixtures.
-- Add `Float` support with the same API shape and reference fixtures.
 - Decide whether complex-valued matrices are in scope for `1.0.0` or explicitly
   post-1.0.
-- Add broader randomized numerical tests, including orthonormal tall matrices
-  and near-rank-deficient cases.
-- Add Release-mode validation for optimization-sensitive Accelerate behavior.
-- Add performance benchmarks for allocation count and row-swap throughput.
-- Expand DocC with algorithm notes, limitations, and reference-fixture
-  provenance.
+- Add broader randomized numerical tests, including stress cases for larger
+  ranks, wider condition-number ranges, and deterministic tie behavior.
+- Add performance benchmarks for allocation count, row-swap throughput, and
+  rectangular append throughput.
+- Profile whether reusable workspaces are worth adding to the public API or
+  should remain an internal optimization.
+- Expand DocC with reference-fixture provenance and a short comparison with
+  Python, Julia, and R implementations.
 - Verify Swift Package Index renders the tagged `v1.0.0` documentation cleanly.

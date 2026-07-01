@@ -1,7 +1,3 @@
-import Accelerate
-
-private typealias LAPACKInt = __LAPACK_int
-
 /// Selects a high-volume square row basis from a tall dense `Double` matrix.
 ///
 /// The returned coefficients are shaped so the input matrix `A` can be
@@ -11,6 +7,25 @@ public func maxVol(
     _ matrix: DenseColumnMajorMatrix<Double>,
     options: MaxVolOptions = MaxVolOptions()
 ) throws -> MaxVolResult<Double> {
+    try maxVolImpl(matrix, options: options)
+}
+
+/// Selects a high-volume square row basis from a tall dense `Float` matrix.
+///
+/// The returned coefficients are shaped so the input matrix `A` can be
+/// approximated by `C * A[selectedRows, :]`, where `C` is
+/// ``MaxVolResult/coefficients``.
+public func maxVol(
+    _ matrix: DenseColumnMajorMatrix<Float>,
+    options: MaxVolOptions = MaxVolOptions()
+) throws -> MaxVolResult<Float> {
+    try maxVolImpl(matrix, options: options)
+}
+
+func maxVolImpl<Scalar: MaxVolScalar>(
+    _ matrix: DenseColumnMajorMatrix<Scalar>,
+    options: MaxVolOptions = MaxVolOptions()
+) throws -> MaxVolResult<Scalar> {
     let input = try matrix.validatedTallMatrix()
     let options = try options.validated()
     var selectedRows = try initialPivotRows(for: input)
@@ -52,7 +67,9 @@ private struct CoefficientPivot {
     let value: Double
 }
 
-private func initialPivotRows(for matrix: DenseColumnMajorMatrix<Double>) throws -> [Int] {
+private func initialPivotRows<Scalar: MaxVolScalar>(
+    for matrix: DenseColumnMajorMatrix<Scalar>
+) throws -> [Int] {
     var factorization = matrix.values
     var rowCount = try lapackInt(matrix.rows)
     var columnCount = try lapackInt(matrix.columns)
@@ -62,18 +79,18 @@ private func initialPivotRows(for matrix: DenseColumnMajorMatrix<Double>) throws
 
     factorization.withUnsafeMutableBufferPointer { factorBuffer -> Void in
         pivots.withUnsafeMutableBufferPointer { pivotBuffer -> Void in
-            dgetrf_(
-                &rowCount,
-                &columnCount,
-                factorBuffer.baseAddress,
-                &leadingDimension,
-                pivotBuffer.baseAddress,
-                &info
+            Scalar.getrf(
+                rowCount: &rowCount,
+                columnCount: &columnCount,
+                values: factorBuffer.baseAddress,
+                leadingDimension: &leadingDimension,
+                pivots: pivotBuffer.baseAddress,
+                info: &info
             )
         }
     }
 
-    try validateLapackInfo(info, routine: "dgetrf", rankDeficientInfoIsPivot: true)
+    try validateLapackInfo(info, routine: Scalar.getrfRoutineName, rankDeficientInfoIsPivot: true)
 
     var permutation = Array(0..<matrix.rows)
     for pivotIndex in 0..<matrix.columns {
@@ -84,10 +101,10 @@ private func initialPivotRows(for matrix: DenseColumnMajorMatrix<Double>) throws
     return Array(permutation.prefix(matrix.columns))
 }
 
-private func expansionCoefficients(
-    for matrix: DenseColumnMajorMatrix<Double>,
+private func expansionCoefficients<Scalar: MaxVolScalar>(
+    for matrix: DenseColumnMajorMatrix<Scalar>,
     selectedRows: [Int]
-) throws -> DenseColumnMajorMatrix<Double> {
+) throws -> DenseColumnMajorMatrix<Scalar> {
     let rank = selectedRows.count
     var basisValues = selectedRowsForBasis(matrix: matrix, selectedRows: selectedRows)
     var rowRankDimension = try lapackInt(rank)
@@ -98,18 +115,18 @@ private func expansionCoefficients(
 
     basisValues.withUnsafeMutableBufferPointer { basisBuffer -> Void in
         pivots.withUnsafeMutableBufferPointer { pivotBuffer -> Void in
-            dgetrf_(
-                &rowRankDimension,
-                &columnRankDimension,
-                basisBuffer.baseAddress,
-                &leadingDimension,
-                pivotBuffer.baseAddress,
-                &info
+            Scalar.getrf(
+                rowCount: &rowRankDimension,
+                columnCount: &columnRankDimension,
+                values: basisBuffer.baseAddress,
+                leadingDimension: &leadingDimension,
+                pivots: pivotBuffer.baseAddress,
+                info: &info
             )
         }
     }
 
-    try validateLapackInfo(info, routine: "dgetrf", rankDeficientInfoIsPivot: true)
+    try validateLapackInfo(info, routine: Scalar.getrfRoutineName, rankDeficientInfoIsPivot: true)
     try validateNonsingularFactorization(basisValues, dimension: rank)
 
     var transposedRightHandSide = transposedValues(matrix)
@@ -123,22 +140,22 @@ private func expansionCoefficients(
     basisValues.withUnsafeMutableBufferPointer { basisBuffer -> Void in
         pivots.withUnsafeMutableBufferPointer { pivotBuffer -> Void in
             transposedRightHandSide.withUnsafeMutableBufferPointer { rightHandSideBuffer -> Void in
-                dgetrs_(
-                    &transpose,
-                    &solveRankDimension,
-                    &rightHandSides,
-                    basisBuffer.baseAddress,
-                    &basisLeadingDimension,
-                    pivotBuffer.baseAddress,
-                    rightHandSideBuffer.baseAddress,
-                    &rightHandSideLeadingDimension,
-                    &info
+                Scalar.getrs(
+                    transpose: &transpose,
+                    dimension: &solveRankDimension,
+                    rightHandSides: &rightHandSides,
+                    factorization: basisBuffer.baseAddress,
+                    leadingDimension: &basisLeadingDimension,
+                    pivots: pivotBuffer.baseAddress,
+                    rightHandSide: rightHandSideBuffer.baseAddress,
+                    rightHandSideLeadingDimension: &rightHandSideLeadingDimension,
+                    info: &info
                 )
             }
         }
     }
 
-    try validateLapackInfo(info, routine: "dgetrs", rankDeficientInfoIsPivot: false)
+    try validateLapackInfo(info, routine: Scalar.getrsRoutineName, rankDeficientInfoIsPivot: false)
 
     let coefficientValues = (0..<rank).flatMap { coefficientColumn in
         (0..<matrix.rows).map { row in
@@ -153,10 +170,10 @@ private func expansionCoefficients(
     )
 }
 
-private func selectedRowsForBasis(
-    matrix: DenseColumnMajorMatrix<Double>,
+private func selectedRowsForBasis<Scalar: MaxVolScalar>(
+    matrix: DenseColumnMajorMatrix<Scalar>,
     selectedRows: [Int]
-) -> [Double] {
+) -> [Scalar] {
     (0..<matrix.columns).flatMap { column in
         selectedRows.map { row in
             matrix[row: row, column: column]
@@ -164,7 +181,9 @@ private func selectedRowsForBasis(
     }
 }
 
-private func transposedValues(_ matrix: DenseColumnMajorMatrix<Double>) -> [Double] {
+private func transposedValues<Scalar: MaxVolScalar>(
+    _ matrix: DenseColumnMajorMatrix<Scalar>
+) -> [Scalar] {
     (0..<matrix.rows).flatMap { row in
         (0..<matrix.columns).map { column in
             matrix[row: row, column: column]
@@ -172,12 +191,18 @@ private func transposedValues(_ matrix: DenseColumnMajorMatrix<Double>) -> [Doub
     }
 }
 
-private func maximumMagnitude(in coefficients: DenseColumnMajorMatrix<Double>) -> CoefficientPivot {
-    var pivot = CoefficientPivot(row: 0, column: 0, value: abs(coefficients[row: 0, column: 0]))
+private func maximumMagnitude<Scalar: MaxVolScalar>(
+    in coefficients: DenseColumnMajorMatrix<Scalar>
+) -> CoefficientPivot {
+    var pivot = CoefficientPivot(
+        row: 0,
+        column: 0,
+        value: coefficients[row: 0, column: 0].magnitudeAsDouble
+    )
 
     for column in 0..<coefficients.columns {
         for row in 0..<coefficients.rows {
-            let magnitude = abs(coefficients[row: row, column: column])
+            let magnitude = coefficients[row: row, column: column].magnitudeAsDouble
             if magnitude > pivot.value {
                 pivot = CoefficientPivot(row: row, column: column, value: magnitude)
             }
@@ -187,10 +212,10 @@ private func maximumMagnitude(in coefficients: DenseColumnMajorMatrix<Double>) -
     return pivot
 }
 
-private func replaceBasisRow(
+private func replaceBasisRow<Scalar: MaxVolScalar>(
     pivotRow: Int,
     pivotColumn: Int,
-    coefficients: inout DenseColumnMajorMatrix<Double>
+    coefficients: inout DenseColumnMajorMatrix<Scalar>
 ) throws {
     let gamma = coefficients[row: pivotRow, column: pivotColumn]
     guard gamma != 0 else {
@@ -209,17 +234,16 @@ private func replaceBasisRow(
     replacementColumn.withUnsafeBufferPointer { columnBuffer -> Void in
         replacementRow.withUnsafeBufferPointer { rowBuffer -> Void in
             coefficients.values.withUnsafeMutableBufferPointer { coefficientBuffer -> Void in
-                cblas_dger(
-                    CblasColMajor,
-                    rowCount,
-                    columnCount,
-                    -1,
-                    columnBuffer.baseAddress,
-                    increment,
-                    rowBuffer.baseAddress,
-                    increment,
-                    coefficientBuffer.baseAddress,
-                    leadingDimension
+                Scalar.rankOneUpdate(
+                    rowCount: rowCount,
+                    columnCount: columnCount,
+                    alpha: -1,
+                    x: columnBuffer.baseAddress,
+                    incrementX: increment,
+                    y: rowBuffer.baseAddress,
+                    incrementY: increment,
+                    values: coefficientBuffer.baseAddress,
+                    leadingDimension: leadingDimension
                 )
             }
         }
@@ -230,38 +254,17 @@ private func replaceBasisRow(
     }
 }
 
-private func lapackInt(_ value: Int) throws -> LAPACKInt {
-    guard value <= Int(LAPACKInt.max) else {
-        throw MaxVolError.invalidDimensions(rows: value, columns: value)
-    }
-
-    return LAPACKInt(value)
-}
-
-private func validateNonsingularFactorization(_ values: [Double], dimension: Int) throws {
-    let scale = max(values.map(abs).max() ?? 0, 1)
-    let threshold = Double.ulpOfOne * Double(dimension) * scale
+private func validateNonsingularFactorization<Scalar: MaxVolScalar>(
+    _ values: [Scalar],
+    dimension: Int
+) throws {
+    let scale = max(values.map(\.magnitudeAsDouble).max() ?? 0, 1)
+    let threshold = Scalar.rankToleranceUnit * Double(dimension) * scale
 
     for pivot in 0..<dimension {
         let diagonal = values[pivot * dimension + pivot]
-        guard abs(diagonal) > threshold else {
+        guard diagonal.magnitudeAsDouble > threshold else {
             throw MaxVolError.rankDeficient(pivot: pivot + 1)
         }
-    }
-}
-
-private func validateLapackInfo(
-    _ info: LAPACKInt,
-    routine: String,
-    rankDeficientInfoIsPivot: Bool
-) throws {
-    if info < 0 {
-        throw MaxVolError.lapackFailure(routine: routine, info: Int(info))
-    }
-    if info > 0 {
-        if rankDeficientInfoIsPivot {
-            throw MaxVolError.rankDeficient(pivot: Int(info))
-        }
-        throw MaxVolError.lapackFailure(routine: routine, info: Int(info))
     }
 }
