@@ -20,7 +20,6 @@ public struct MaxVolOptions: Equatable, Hashable, Sendable {
         guard tolerance.isFinite, tolerance >= 1 else {
             throw MaxVolError.invalidTolerance(tolerance)
         }
-
         guard maxIterations >= 0 else {
             throw MaxVolError.invalidIterationLimit(maxIterations)
         }

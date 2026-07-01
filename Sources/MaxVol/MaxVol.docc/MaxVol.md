@@ -44,6 +44,13 @@ rows:
 let coefficients = result.coefficients
 ```
 
+Call ``rectMaxVol(_:options:)`` when the basis may contain more rows than the
+matrix column count:
+
+```swift
+let rectangular = try rectMaxVol(matrix, options: RectMaxVolOptions(minRows: 3))
+```
+
 ## Topics
 
 ### Matrix Storage
@@ -53,6 +60,12 @@ let coefficients = result.coefficients
 ### MaxVol
 
 - ``maxVol(_:options:)``
+- ``rectMaxVol(_:options:)``
 - ``MaxVolOptions``
+- ``RectMaxVolOptions``
 - ``MaxVolResult``
 - ``MaxVolError``
+
+### Algorithm Notes
+
+- <doc:ToleranceAndConvergence>
