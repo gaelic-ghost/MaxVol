@@ -77,3 +77,4 @@ let rectangular = try rectMaxVol(matrix, options: RectMaxVolOptions(minRows: 3))
 ### Algorithm Notes
 
 - <doc:ToleranceAndConvergence>
+- <doc:BenchmarkingAndParity>
